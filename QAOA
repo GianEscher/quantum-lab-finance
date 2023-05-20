@@ -1,0 +1,46 @@
+import numpy as np
+import pandas as pd
+from pandas_datareader import data as pdr
+import yfinance as yf
+from qiskit.finance.applications.ising import portfolio
+from qiskit import Aer
+from qiskit.aqua import aqua_globals, QuantumInstance
+from qiskit.aqua.algorithms import QAOA
+from qiskit.aqua.components.optimizers import COBYLA
+
+yf.pdr_override()
+
+# Defina os ativos para os quais queremos os dados
+assets = ['AAPL', 'MSFT', 'GOOG', 'FB', 'AMZN']
+
+# Defina o intervalo de datas para o qual queremos os dados
+start_date = '2020-01-01'
+end_date = '2021-12-31'
+
+# Obtenha os dados do Yahoo Finance
+data = pdr.get_data_yahoo(assets, start=start_date, end=end_date)
+
+# Use apenas o preço de fechamento
+data = data['Close']
+
+# Calcule os retornos logarítmicos, que são mais apropriados para a análise financeira
+returns = np.log(data / data.shift(1))
+
+# Calcule os retornos médios e a matriz de covariância
+mu = returns.mean().values
+sigma = returns.cov().values
+
+# Defina o orçamento
+budget = 2
+
+# Crie uma instância do problema de otimização de portfólio
+portfolio = portfolio.Portfolio(expected_returns=mu, covariances=sigma, budget=budget)
+
+# Crie uma instância do algoritmo QAOA
+qaoa = QAOA(optimizer=COBYLA(), quantum_instance=QuantumInstance(backend=Aer.get_backend('statevector_simulator')))
+
+# Execute o algoritmo QAOA para encontrar a solução ótima
+result = qaoa.compute_minimum_eigenvalue(qubit_op)
+
+# Print the result
+print(result)
