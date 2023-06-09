@@ -1,3 +1,10 @@
+#normalizar artigo - modelo iniciação científica
+#search engine utilizando heap merge sort
+#review matriz de variança e covariança - check
+#analisar algoritmo quant no repo quantum lab
+#comparação desempenho quant x classic
+
+
 import pandas as pd
 import pandas_bokeh
 import yfinance as yfin
@@ -7,7 +14,7 @@ from tkinter import *
 import tkinter as tk
 from tkinter import ttk
 import matplotlib.pyplot as plt
-
+ 
 yfin.pdr_override()
 
 #quatro vetores globais são criados.
@@ -24,7 +31,7 @@ risks = []
 
 #a função setup alimenta os quatro vetores globais, a fim de preparar os principais dados necessários para alimentar a função markowitz()
 
-def setup(n_stocks, data_inicial, data_final,codes):
+def setup(n_stocks, data_inicial, data_final, codes):
 
   #essas são as duas datas mencionadas no princípio deste documento.
   #data_inicial = input('insert the start data, as "yyyy-mm-dd": ')
@@ -55,9 +62,9 @@ def setup(n_stocks, data_inicial, data_final,codes):
     #o laço while abaixo calcula os erros percentuais consecutivos
     j=1
     while(j<len(stocks_raw)):
-      stocks_gain.append((stocks_raw[j]-stocks_raw[j-1])/stocks_raw[j-1])
+      stocks_gain.append(((stocks_raw[j]-stocks_raw[j-1])/stocks_raw[j-1])*100)
       j+=1
-    stocks_registry.append(stocks_gain)#adiciona os erros percentuais à matriz global
+    stocks_registry.append(stocks_gain)#adiciona os erros percentuais, em porcentagem, à matriz global
 
     #a média é calculada em seguida
     sum = 0
@@ -68,16 +75,22 @@ def setup(n_stocks, data_inicial, data_final,codes):
     #cálculo do desvio padrão. Preferiu-se fazê-lo a fim de reduzir o número de raízes calculadas, uma vez que
     #computacionalmente falando, cálculo de potências é mais performático
     sd = 0
-    for a in stocks_gain:
-      sd += (a-sum)*(a-sum)
-    sd == np.sqrt(sd/len(stocks_gain) )   
+    j=0
+    while(j<len(stocks_gain)):
+      sd += ((a-stocks_gain[j])*(a-stocks_gain[j]))
+      j += 1
+    sd = np.sqrt(sd/len(stocks_gain))  
     volatility.append(sd)
 
     i+=1
 
   print(stocks_registry)
+  print("====================================================")
   print(gain)
+  print("====================================================")
   print(volatility)
+  print("====================================================")
+
   
   
   #construção da matriz de risco
@@ -119,12 +132,136 @@ def covar(list_A, mean_A, list_B, mean_B):
     sum+=(list_A[i]-mean_A)*(list_B[i]-mean_B)
     i+=1
     
-  return sum/lenght
+  return sum/lenght  
+
+def merge_sort(arr, left, right):
+  #right é o último índice do vetor a ser dividido/sortido; left é o primeiro
+  
+  print("array")
+  print(arr)
+  print("right:")
+  print(right)
+  print("left:")
+  print(left)
+  if(left<right) :
+
+    print("tested")
+    mid = (left+right)//2
+    print("mid")
+    print(mid)
+    #o meio é arredondado para baixo
+
+    n1 = []#em linguagens estáticas, o tamanho desse vetor temporário será dado por mid - left + 1
+    n2 = []#no mesmo caso, o tamanho seria definido por right - mid
+
+    size_l = mid - left + 1
+    size_r = right - mid
+    
+    #low = arr[mid:]
+    i = 0
+    while(i<size_l):
+      n1.append(arr[i])
+      i += 1
+
+    i = 0
+    while(i<size_r):
+      n2.append(arr[i+mid+1-left])
+      i += 1
+
+    print("called left")
+    merge_sort(n1, left, mid)
+    print("called right")
+    merge_sort(n2, mid+1, right)
+
+    i = j = k = 0
+    
+    print(n1)
+    print(n2)
+    print(mid+1)
+    print(right+1)
+
+    while i < size_l and j < size_r:
+      print(i)
+      print(j)
+      if n1[i] <= n2[j]:
+        arr[k] = n1[i]
+        print("n1 menor n2")
+        print(n1[i])
+        print(n2[j])
+        i += 1
+      else:
+        arr[k] = n2[j]
+        print("n2 menor n1")
+        print(n1[i])
+        print(n2[j])
+        j += 1
+      print(k)
+      k += 1
+
+    print(arr)
+
+    while i < size_l:
+      arr[k] = n1[i]
+      i += 1
+      k += 1
+    
+    while j < size_r:
+      arr[k] = n2[j]
+      j += 1
+      k += 1 
+
+  #right é o último índice do vetor a ser dividido/sortido; left é o primeiro
+  
+  if((right+1)<1) :
+
+    mid = (right-left+1)//2
+    #o meio é arredondado para baixo
+
+    n1 = []#em linguagens estáticas, o tamanho desse vetor temporário será dado por mid - left + 1
+    n2 = []#no mesmo caso, o tamanho seria definido por right - mid
+
+    #low = arr[mid:]
+    i = 0
+    while(i<=mid):
+      n1[i] = arr[i]
+      i += 1
+
+    i = mid+1
+    while(i<=right):
+      n2[i] = arr[i]
+      i += 1
+    
+    merge_sort(n1, left, mid)
+    merge_sort(n2, mid+1, right)
+
+    i = j = k = 0
+
+    while i < mid+1 and j < right + 1:
+      if n1[i] <= n2[j]:
+        arr[k] = n1[i]
+        i += 1
+      else:
+        arr[k] = n2[k]
+        j += 1
+
+    while i < mid+1:
+      arr[k] = n1[i]
+      i += 1
+      k += 1
+    
+    while j < right+1:
+      arr[k] = n2[i]
+      i += 1
+      k += 1
+
+
+
+
 
 def markowtiz(n_stocks):
 
   #número de portfolios a ser calculado; definido arbitrariamente
-  iterations = 10000
+  iterations = 30000
 
   #vetor contendo retorno total de cada portfolio calculado
   return_total = []
@@ -215,6 +352,9 @@ def markowtiz(n_stocks):
 
   portfolios.plot.scatter(x='Risco', y='Retorno', c='green', marker='o', s=10, alpha=0.15)
   plt.show()
+
+  #merge_sort(risk_total, 0, len(risk_total)-1)
+  #!--TO-BE-IMPLEMENTED--!
   
 def setup_gui():
   root = Tk()
