@@ -14,6 +14,8 @@ from tkinter import *
 import tkinter as tk
 from tkinter import ttk
 import matplotlib.pyplot as plt
+from multiprocessing import Process
+import multiprocessing
  
 yfin.pdr_override()
 
@@ -31,7 +33,7 @@ risks = []
 
 #a função setup alimenta os quatro vetores globais, a fim de preparar os principais dados necessários para alimentar a função markowitz()
 
-def setup(n_stocks, data_inicial, data_final, codes):
+def setup(n_stocks, data_inicial, data_final, codes, data_shared):
 
   #essas são as duas datas mencionadas no princípio deste documento.
   #data_inicial = input('insert the start data, as "yyyy-mm-dd": ')
@@ -120,7 +122,8 @@ def setup(n_stocks, data_inicial, data_final, codes):
   plt.colorbar()
   plt.show()
 
-  markowtiz(n_stocks)
+  markowitz(n_stocks,data_shared)
+    
   
 #função responsável por calcular a covariâça, dado os erros percentuais consecutivos e a média de duas ações
 def covar(list_A, mean_A, list_B, mean_B):
@@ -254,11 +257,7 @@ def merge_sort(arr, left, right):
       i += 1
       k += 1
 
-
-
-
-
-def markowtiz(n_stocks):
+def markowitz(n_stocks,data_shared):
 
   #número de portfolios a ser calculado; definido arbitrariamente
   iterations = 30000
@@ -267,6 +266,7 @@ def markowtiz(n_stocks):
   return_total = []
 
   #vetor contendo risco total de cada portfolio calculado
+  global risk_total
   risk_total = []
 
   weight_matrix = []
@@ -346,17 +346,133 @@ def markowtiz(n_stocks):
 
     i += 1
   
+  #Insere o dicionario local contendo riscos, ganhos e pesos 
+  #no dicionario da memoria compartilhada
+  for key in data:
+    data_shared[key] = data[key]
+
   portfolios = pd.DataFrame(data)
+  print(data)
 
+
+  
+def plot_markowitz(data_shared):
+  print(data_shared)
+
+  data = {}
+  for key in data_shared:
+    data[key] = data_shared[key]
+
+  portfolios = pd.DataFrame(data) 
   print(portfolios)
-
   portfolios.plot.scatter(x='Risco', y='Retorno', c='green', marker='o', s=10, alpha=0.15)
   plt.show()
 
-  #merge_sort(risk_total, 0, len(risk_total)-1)
-  #!--TO-BE-IMPLEMENTED--!
+def merge_sort(arr, left, right):
+  #right é o último índice do vetor a ser dividido/sortido; left é o primeiro
   
-def setup_gui():
+  if(left<right) :
+
+    mid = (left+right)//2
+    #o meio é arredondado para baixo
+
+    n1 = []#em linguagens estáticas, o tamanho desse vetor temporário será dado por mid - left + 1
+    n2 = []#no mesmo caso, o tamanho seria definido por right - mid
+
+    size_l = mid - left + 1
+    size_r = right - mid
+    
+    #low = arr[mid:]
+    i = 0
+    while(i<size_l):
+      n1.append(arr[i])
+      i += 1
+
+    i = 0
+    while(i<size_r):
+      n2.append(arr[i+mid+1-left])
+      i += 1
+
+    merge_sort(n1, left, mid)
+    merge_sort(n2, mid+1, right)
+
+    i = j = k = 0
+
+    while i < size_l and j < size_r:
+      if n1[i] <= n2[j]:
+        arr[k] = n1[i]
+        i += 1
+      else:
+        arr[k] = n2[j]
+        j += 1
+      print(k)
+      k += 1
+
+    while i < size_l:
+      arr[k] = n1[i]
+      i += 1
+      k += 1
+    
+    while j < size_r:
+      arr[k] = n2[j]
+      j += 1
+      k += 1
+
+def binary_search(arr, left, right, element):
+
+  #a condicao abaixo permitira a execucao da busca, a menos que as entradas sejam invalidas
+  #desde a invocacao deste metodo
+  print(left)
+  print(right)
+  print("===================")
+  
+  while(left<=right):
+
+    #note que os indices sao referentes ao array original, e nao relativos aos segmentos
+    #analisados na busca
+    mid = left + (right-left)//2
+
+    print(left)
+    print(mid)
+    print(right)
+    print("===================")
+
+
+    if(arr[mid]==element):
+      print("the element is at index:" + str(mid))
+      return 0
+
+    elif(arr[mid]<element):
+      left = mid+1
+      
+    else:
+      right = mid-1
+
+  print("there is no such element")
+
+def search_gui(data_shared):
+
+  root = Tk()
+  frm = ttk.Frame(root, padding=10)
+  frm.grid()
+
+  risk_min = Entry(frm,width=30)
+  risk_min.grid(row = 0, column = 1)
+
+  risk_max = Entry(frm,width=30)
+  risk_max.grid(row = 1, column = 1)
+
+
+  stocks_label = Label(frm, text="Risco mínimo: ")
+  stocks_label.grid(row=0,column=0)
+
+  stocks_label = Label(frm, text="Risco máximo: ")
+  stocks_label.grid(row=0,column=0)
+
+  root.mainloop()
+
+
+def setup_gui(data_shared):
   root = Tk()
   frm = ttk.Frame(root, padding=10)
   frm.grid()
@@ -390,7 +506,7 @@ def setup_gui():
     data_inicial = str(start_entry.get())
     data_final = str(end_entry.get())
     root.destroy()
-    stocks_gui(n_stocks,data_inicial,data_final)
+    stocks_gui(n_stocks,data_inicial,data_final,data_shared)
     
 
   do_it = Button(frm, text="Próximo", command=retrieve)
@@ -398,7 +514,7 @@ def setup_gui():
 
   root.mainloop()
 
-def stocks_gui(n_stocks,data_inicial,data_final):
+def stocks_gui(n_stocks,data_inicial,data_final,data_shared):
 
   root = Tk()
   frm = ttk.Frame(root,padding=10)
@@ -423,11 +539,40 @@ def stocks_gui(n_stocks,data_inicial,data_final):
       codes.append(arr[i].get())
       i += 1
     root.destroy()
-    setup(n_stocks,data_inicial,data_final,codes) 
+    setup(n_stocks,data_inicial,data_final,codes,data_shared) 
 
   do_it = Button(frm, text="Próximo", command=setup_follow)
   do_it.grid(row=i+1,column=0)
 
   root.mainloop()
 
-setup_gui()
+if __name__ == '__main__':
+
+  #data_shared = multiprocessing.Array('d',0)
+  manager = multiprocessing.Manager()
+  data_shared = manager.dict()
+
+  p0 = Process(target=setup_gui, args=([data_shared]))
+  p0.start()  
+  p0.join()
+
+  #p_plot = Process(target=plot_markowitz, args=[data_shared])
+  #p_plot.start()
+  
+
+  p_search = Process(target=search_gui, args=([data_shared]))
+  p_search.start()
+
+  plot_markowitz(data_shared)
+
+  #p_plot.join()
+  p_search.join()
+
+  #print(data_shared)
+
+  
+
+
+  #print("{}".format(data_shared[:]))
+  
+#setup_gui()
