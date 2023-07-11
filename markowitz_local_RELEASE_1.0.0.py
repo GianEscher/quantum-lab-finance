@@ -65,7 +65,7 @@ def setup(n_stocks, data_inicial, data_final, codes):
     #o laço while abaixo calcula os erros percentuais consecutivos
     j=1
     while(j<len(stocks_raw)):
-      stocks_gain.append(((stocks_raw[j]-stocks_raw[j-1])/stocks_raw[j-1])*100)
+      stocks_gain.append(((stocks_raw[j]-stocks_raw[j-1])/stocks_raw[j-1]))
       j+=1
     stocks_registry.append(stocks_gain)#adiciona os erros percentuais, em porcentagem, à matriz global
 
@@ -73,14 +73,15 @@ def setup(n_stocks, data_inicial, data_final, codes):
     sum = 0
     for a in stocks_gain:
       sum += a
-    gain.append(sum/len(stocks_gain))
+    mean = sum/len(stocks_gain)
+    gain.append(mean)
     
     #cálculo do desvio padrão. Preferiu-se fazê-lo a fim de reduzir o número de raízes calculadas, uma vez que
     #computacionalmente falando, cálculo de potências é mais performático
     sd = 0
     j=0
     while(j<len(stocks_gain)):
-      sd += ((a-stocks_gain[j])*(a-stocks_gain[j]))
+      sd += ((mean-stocks_gain[j])*(mean-stocks_gain[j]))
       j += 1
     sd = np.sqrt(sd/len(stocks_gain))  
     volatility.append(sd)
