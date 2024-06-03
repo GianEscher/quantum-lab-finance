@@ -77,9 +77,9 @@ To contour that, a binary number (actually, 1 or -1) is sorted before the iterat
 
 This version of weight distribution also requires the amount $k$ of assets to be picked. Instead of 'chipping off a piece' of the range for each asset, it sorts if a position in some array of zeros will be flipped to 1, using Python binary distribution.
 
-But by doing so, not only we have the same problem with starting indexes from the previous version, but also we may find that a number of zeros $ <k $ was flipped during one full iteration over the array.
+But by doing so, not only we have the same problem with starting indexes from the previous version, but also we may find that a number of zeros *<k* was flipped during one full iteration over the array.
 
-Therefore, the same 'starting index sorting' from the previous version is implemented here, and the loop is made a bit more complex by being 'reversable', in case of not fulfilling its quota of $ k $ flips.
+Therefore, the same 'starting index sorting' from the previous version is implemented here, and the loop is made a bit more complex by being 'reversable', in case of not fulfilling its quota of *k* flips.
 
 ### Combinated distribution
 
